@@ -30,7 +30,7 @@ module.exports = {
       chainId: 1,
       accounts: {
         count: 100,
-        mnemonic,
+        mnemonic: walletMnemonic,
       },
       allowUnlimitedContractSize: true,
       url: 'http://127.0.0.1:8545',
