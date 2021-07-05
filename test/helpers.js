@@ -1,13 +1,19 @@
 const assert = require('assert');
 
+const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
+
 const ERC721_INTERFACE = '0x80ac58cd';
 const AccessControlEnumerable_INTERFACE = '0x5a05180f';
 const ERC721Enumerable_INTERFACE = '0x780e9d63';
+const ERC1155MetadataURI_INTERFACE = '0x0e89341c';
+const ERC1155_INTERFACE = '0xd9b67a26';
 
 const INTERFACE_NAMES = {
   [ERC721_INTERFACE]: 'ERC721',
   [AccessControlEnumerable_INTERFACE]: 'AccessControlEnumberable',
   [ERC721Enumerable_INTERFACE]: 'ERC721Enumerable',
+  [ERC1155MetadataURI_INTERFACE]: 'IERC1155MetadataURI',
+  [ERC1155_INTERFACE]: 'ERC1155',
 };
 
 async function assertInterface(token, interface) {
@@ -32,15 +38,18 @@ const shouldRevert = async (action, expectedOutput, message) => {
   } catch(error) {
     assert.ok(
       error.message.includes(expectedOutput),
-      `Expected: "${expectedOutput}" - (${message}`,
+      `Expected: "${expectedOutput}"\n(${message || error.message}`,
     );
   }
 };
 
 module.exports = {
+  ADDRESS_ZERO,
   ERC721_INTERFACE,
   AccessControlEnumerable_INTERFACE,
   ERC721Enumerable_INTERFACE,
+  ERC1155MetadataURI_INTERFACE,
+  ERC1155_INTERFACE,
   assertInterface,
   assertRole,
   assertNoRole,

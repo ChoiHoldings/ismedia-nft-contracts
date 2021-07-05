@@ -9,9 +9,8 @@ const {
   assertRole,
   assertNoRole,
   shouldRevert,
+  ADDRESS_ZERO,
 } = require('./helpers');
-
-const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
 const URI = 'https://erc721.ismedia.com/data/';
 
@@ -83,7 +82,7 @@ describe('ERC721', function() {
 
   it('Can mint', async function() {
     // Owner mints to user 1
-    await expect(token.connect(owner).mint(user1.address))
+    expect(await token.connect(owner).mint(user1.address))
       .to.emit(token, 'Transfer')
       .withArgs(ADDRESS_ZERO, user1.address, id1);
 
@@ -94,16 +93,22 @@ describe('ERC721', function() {
     assert.strictEqual(tokenOwner, user1.address, `Wrong owner of id=${id1}`);
 
     // Minter role, mint to self
-    await expect(token.connect(user1).mint(user1.address))
+    expect(await token.connect(user1).mint(user1.address))
       .to.emit(token, 'Transfer')
       .withArgs(ADDRESS_ZERO, user1.address, id2);
 
     // Mint to user2
-    await expect(token.connect(user1).mint(user2.address))
+    expect(await token.connect(user1).mint(user2.address))
       .to.emit(token, 'Transfer')
       .withArgs(ADDRESS_ZERO, user2.address, id3);
 
     expect(await token.totalSupply()).to.equal(3);
+
+    // Non-minter can't mint
+    await shouldRevert(
+      token.connect(user2).mint(user2.address),
+      'Minter role required',
+    );
   });
 
   it('Can check ownership', async function() {
@@ -142,26 +147,22 @@ describe('ERC721', function() {
   });
 
   it('Can pause/unpause', async function() {
-    await token.connect(user3).approve(user1.address, id3);
-
     expect(await token.paused()).false;
 
     // Non-pauser can't pause
     await shouldRevert(
       token.connect(user1).pause(),
-      '',
+      'Pause role required',
     );
 
-    // Can't transfer when paused
+    // Can approve but not transfer when paused
     await token.connect(owner).pause();
     expect(await token.paused()).true;
-    await shouldRevert(
-      token.connect(user3).approve(user1.address, id1),
-      '',
-    );
+
+    await token.connect(user3).approve(user1.address, id3);
     await shouldRevert(
       token.connect(user1).transferFrom(user3.address, user1.address, id3),
-      '',
+      'ERC721Pausable: token transfer while paused',
     );
 
     await token.connect(owner).unpause();

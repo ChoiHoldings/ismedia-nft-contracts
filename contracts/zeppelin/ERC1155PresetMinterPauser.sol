@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "./ERC1155.sol";
+import "./ERC1155Supply.sol";
 import "./ERC1155Burnable.sol";
 import "./ERC1155Pausable.sol";
 import "./AccessControlEnumerable.sol";
@@ -22,7 +23,7 @@ import "./Context.sol";
  * roles, as well as the default admin role, which will let it grant both minter
  * and pauser roles to other accounts.
  */
-contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155Burnable, ERC1155Pausable {
+contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155Burnable, ERC1155Pausable, ERC1155Supply {
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
@@ -35,6 +36,15 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
 
         _setupRole(MINTER_ROLE, _msgSender());
         _setupRole(PAUSER_ROLE, _msgSender());
+    }
+
+    function _mint(
+        address to,
+        uint256 id,
+        uint256 amount,
+        bytes memory data
+    ) internal virtual override(ERC1155Supply, ERC1155) {
+        super._mint(to, id, amount, data);
     }
 
     /**
@@ -52,9 +62,18 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
         uint256 amount,
         bytes memory data
     ) public virtual {
-        require(hasRole(MINTER_ROLE, _msgSender()), "ERC1155PresetMinterPauser: must have minter role to mint");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Minter role required");
 
         _mint(to, id, amount, data);
+    }
+
+    function _mintBatch(
+        address to,
+        uint256[] memory ids,
+        uint256[] memory amounts,
+        bytes memory data
+    ) internal virtual override(ERC1155Supply, ERC1155) {
+        super._mintBatch(to, ids, amounts, data);
     }
 
     /**
@@ -66,7 +85,7 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
         uint256[] memory amounts,
         bytes memory data
     ) public virtual {
-        require(hasRole(MINTER_ROLE, _msgSender()), "ERC1155PresetMinterPauser: must have minter role to mint");
+        require(hasRole(MINTER_ROLE, _msgSender()), "Minter role required");
 
         _mintBatch(to, ids, amounts, data);
     }
@@ -81,7 +100,7 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
      * - the caller must have the `PAUSER_ROLE`.
      */
     function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "ERC1155PresetMinterPauser: must have pauser role to pause");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "Pauser role required");
         _pause();
     }
 
@@ -95,7 +114,7 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
      * - the caller must have the `PAUSER_ROLE`.
      */
     function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "ERC1155PresetMinterPauser: must have pauser role to unpause");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "Pauser role required");
         _unpause();
     }
 
@@ -121,5 +140,22 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
         bytes memory data
     ) internal virtual override(ERC1155, ERC1155Pausable) {
         super._beforeTokenTransfer(operator, from, to, ids, amounts, data);
+    }
+
+    function _burn(
+        address account,
+        uint256 id,
+        uint256 amount
+    ) internal virtual override(ERC1155Supply, ERC1155) {
+        super._burn(account, id, amount);
+    }
+
+
+    function _burnBatch(
+        address account,
+        uint256[] memory ids,
+        uint256[] memory amounts
+    ) internal virtual override(ERC1155Supply, ERC1155) {
+        super._burnBatch(account, ids, amounts);
     }
 }
