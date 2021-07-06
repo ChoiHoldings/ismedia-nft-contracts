@@ -100,7 +100,7 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
      * - the caller must have the `PAUSER_ROLE`.
      */
     function pause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "Pauser role required");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "Pause role required");
         _pause();
     }
 
@@ -114,7 +114,7 @@ contract ERC1155PresetMinterPauser is Context, AccessControlEnumerable, ERC1155B
      * - the caller must have the `PAUSER_ROLE`.
      */
     function unpause() public virtual {
-        require(hasRole(PAUSER_ROLE, _msgSender()), "Pauser role required");
+        require(hasRole(PAUSER_ROLE, _msgSender()), "Pause role required");
         _unpause();
     }
 

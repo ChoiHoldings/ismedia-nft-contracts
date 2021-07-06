@@ -23,26 +23,13 @@ describe('ERC1155', function() {
   const id1 = '0';
   const id2 = '1';
   const id3 = '0xfff';
+  const id1Amount = 1;
+  const id2Amount = '10';
+  const id3Amount = '10000000';
 
   before(async () => {
     [owner, user1, user2, user3] = await ethers.getSigners();
   });
-
-  /*
-    balanceOf: [Function (anonymous)],
-  balanceOfBatch: [Function (anonymous)],
-  burn: [Function (anonymous)],
-  burnBatch: [Function (anonymous)],
-  isApprovedForAll: [Function (anonymous)],
-  mint: [Function (anonymous)],
-  mintBatch: [Function (anonymous)],
-  pause: [Function (anonymous)],
-  paused: [Function (anonymous)],
-  safeBatchTransferFrom: [Function (anonymous)],
-  safeTransferFrom: [Function (anonymous)],
-  setApprovalForAll: [Function (anonymous)],
-  unpause: [Function (anonymous)],
-  */
 
   it('Deploy ERC1155', async function() {
     const ERC1155Factory = await ethers.getContractFactory('IsmediaERC1155');
@@ -89,9 +76,6 @@ describe('ERC1155', function() {
   });
 
   it('Can mint NFTs', async function() {
-    const id1Amount = 1;
-    const id2Amount = '10';
-    const id3Amount = '10000000';
 
     // Owner mints an NFT token to user1
     expect(await token.connect(owner).mint(user1.address, id1, id1Amount, []))
@@ -122,6 +106,93 @@ describe('ERC1155', function() {
       token.connect(user2).mint(user1.address, id1, id1Amount, []),
       'Minter role required',
     );
+  });
+
+  it('Can pause/unpause', async function() {
+    expect(await token.paused()).false;
+
+    // Non-pauser can't pause
+    await shouldRevert(
+      token.connect(user1).pause(),
+      'Pause role required',
+    );
+
+    // Can approve but not transfer when paused
+    await token.connect(owner).pause();
+    expect(await token.paused()).true;
+
+    await shouldRevert(
+      token.connect(user1).safeTransferFrom(user1.address, user3.address, id2, 1, []),
+      'ERC1155Pausable: token transfer while paused',
+    );
+
+    await token.connect(owner).unpause();
+    expect(await token.paused()).false;
+  });
+
+  it('Can transfer', async function() {
+    // Can't transfer more than balance
+    await shouldRevert(
+      token.connect(user1).safeTransferFrom(user1.address, user3.address, id1, 2, []),
+      'ERC1155: insufficient balance for transfer',
+    );
+    // Non-owner can't transfer
+    await shouldRevert(
+      token.connect(user2).safeTransferFrom(user1.address, user3.address, id1, 1, []),
+      'ERC1155: caller is not owner nor approved',
+    );
+
+    await token.connect(user1).safeTransferFrom(user1.address, user3.address, id1, id1Amount, []);
+    await token.connect(user1).safeTransferFrom(user1.address, user3.address, id2, id2Amount, []);
+    await token.connect(user2).safeTransferFrom(user2.address, user3.address, id3, id3Amount, []);
+
+    expect(await token.balanceOf(user3.address, id1)).to.equal(id1Amount);
+    expect(await token.balanceOf(user3.address, id2)).to.equal(id2Amount);
+    expect(await token.balanceOf(user3.address, id3)).to.equal(id3Amount);
+  });
+
+  it('Can grant approval and transfer', async function() {
+    expect(await token.isApprovedForAll(user3.address, user1.address)).false;
+    await token.connect(user3).setApprovalForAll(user1.address, true);
+    expect(await token.isApprovedForAll(user3.address, user1.address)).true;
+
+    await token.connect(user1).safeTransferFrom(user3.address, user2.address, id3, id3Amount, []);
+    expect(await token.balanceOf(user2.address, id3)).to.equal(id3Amount);
+
+    await token.connect(user3).setApprovalForAll(user1.address, false);
+    expect(await token.isApprovedForAll(user3.address, user1.address)).false;
+  });
+
+  it('Can mint batches', async function() {
+    // TODO
+    // balanceOfBatch
+    // mintBatch
+  });
+
+  it('Can transfer batches', async function() {
+    // TODO
+    // safeBatchTransferFrom
+  });
+
+  it('Can burn', async function() {
+    await token.connect(user3).burn(user3.address, id2, '10');
+
+    expect(await token.balanceOf(user3.address, id2)).to.equal(0);
+    expect(await token.totalSupply(id2)).to.equal(0);
+
+    // Can't burn more than exist
+    await shouldRevert(
+      token.connect(user2).burn(user2.address, id1, 2),
+      'ERC1155: burn amount exceeds balance',
+    );
+
+    // Non-owner can't burn
+    await shouldRevert(
+      token.connect(user2).burn(user3.address, id1, '1'),
+      'ERC1155: caller is not owner nor approved',
+    );
+
+    // TODO burnBatch
   });
 
 });
