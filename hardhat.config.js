@@ -25,16 +25,10 @@ module.exports = {
       allowUnlimitedContractSize: true,
       logged: hardhatLogging,
     },
-    // This is used as a profile for connecting to the already running local network
-    localRPC: {
-      chainId: 1,
-      accounts: {
-        count: 100,
-        mnemonic: walletMnemonic,
-      },
-      allowUnlimitedContractSize: true,
-      url: 'http://127.0.0.1:8545',
-      loggingEnabled: hardhatLogging,
+    hardhat: {
+      chainId: 1337,
+      auto: false,
+      interval: 5000,
     },
     ropsten: {
       chainId: 3,

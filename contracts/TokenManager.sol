@@ -18,5 +18,7 @@ contract TokenManager {
     constructor(address _erc721, address _erc1155) {
         erc721 = ERC721PresetMinterPauserAutoId(_erc721);
         erc1155 = ERC1155PresetMinterPauser(_erc1155);
+
+        // TODO determine whether to use this wrapper, or ERCX contracts directly
     }
 }
