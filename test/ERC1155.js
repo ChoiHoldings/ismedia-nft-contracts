@@ -1,4 +1,3 @@
-const assert = require('assert');
 const { expect } = require('chai');
 const {
   ERC1155_INTERFACE,
@@ -11,13 +10,14 @@ const {
   ADDRESS_ZERO,
 } = require('./helpers');
 
-const URI = 'https://erc1155.ismedia.com/{id}'
+const URI = 'https://erc1155.ismedia.com/{id}';
 
 describe('ERC1155', function() {
   let token;
   let owner;
   let user1;
   let user2;
+  let user3;
   let pauserRole;
   let minterRole;
   const id1 = '0';
