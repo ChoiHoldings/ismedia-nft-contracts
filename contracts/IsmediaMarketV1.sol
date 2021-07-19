@@ -34,6 +34,7 @@ contract IsmediaMarketV1 is Pausable, Ownable {
     );
 
     enum SaleStatus {
+        Pending,
         Active,
         Complete,
         Canceled,
@@ -50,9 +51,10 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         uint256 tokenId;
         uint256 unitPrice;
         uint256 quantity;
+        uint256 start;
         uint256 end;
         TokenType tokenType;
-        SaleStatus status;
+        bool cancelled;
     }
 
     IERC721 public erc721;
@@ -89,12 +91,9 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         uint256 totalPrice = sale.unitPrice * quantity;
         require(msg.value >= totalPrice, "Payment low");
         require(quantity <= sale.quantity, "Quantity high");
-        require(sale.status == SaleStatus.Active, "Sale inactive");
+        require(saleStatus(saleId) == uint8(SaleStatus.Active), "Sale inactive");
 
         sale.quantity -= quantity;
-        if(sale.quantity == 0) {
-            sale.status = SaleStatus.Complete;
-        }
         address tokenAddress = tokenFromType(uint8(sale.tokenType));
 
         if(sale.tokenType == TokenType.ERC721) {
@@ -116,7 +115,14 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         );
     }
 
-    function _post(uint256 tokenId, uint256 unitPrice, uint256 quantity, TokenType tokenType) private {
+    function _post(
+        uint256 tokenId,
+        uint256 unitPrice,
+        uint256 quantity,
+        uint256 start,
+        uint256 end,
+        TokenType tokenType
+    ) private {
         uint256 saleId = saleCounter;
         TokenSale storage sale = sales[saleId];
         address tokenAddress = tokenFromType(uint8(tokenType));
@@ -133,7 +139,9 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         sale.unitPrice = unitPrice;
         sale.quantity = quantity;
         sale.tokenType = tokenType;
-        sale.status = SaleStatus.Active;
+        sale.start = start;
+        sale.end = end;
+        sale.cancelled = false;
 
         saleCounter += 1;
 
@@ -146,22 +154,22 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         );
     }
 
-    function postERC1155(uint256 tokenId, uint256 unitPrice, uint256 quantity) public whenNotPaused() {
-        _post(tokenId, unitPrice, quantity, TokenType.ERC1155);
+    function postERC1155(uint256 tokenId, uint256 unitPrice, uint256 quantity, uint256 start, uint256 end) public whenNotPaused() {
+        _post(tokenId, unitPrice, quantity, start, end, TokenType.ERC1155);
     }
 
-    function postERC721(uint256 tokenId, uint256 unitPrice) public whenNotPaused() {
-        _post(tokenId, unitPrice, 1, TokenType.ERC721);
+    function postERC721(uint256 tokenId, uint256 unitPrice, uint256 start, uint256 end) public whenNotPaused() {
+        _post(tokenId, unitPrice, 1, start, end, TokenType.ERC721);
     }
 
     function cancel(uint256 saleId) public whenNotPaused() {
         TokenSale storage sale = sales[saleId];
         require(sale.seller == msg.sender, "Only sale owner");
-        require(sale.status == SaleStatus.Active, "Sale inactive");
+        require(saleStatus(saleId) == uint8(SaleStatus.Active), "Sale inactive");
 
         address tokenAddress = tokenFromType(uint8(sale.tokenType));
 
-        sale.status = SaleStatus.Canceled;
+        sale.cancelled = true;
 
         emit SaleCancelled(
             sale.seller,
@@ -171,7 +179,20 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         );
     }
 
-    function saleStatus(uint256 saleId) external view returns(uint8) {
-        return uint8(sales[saleId].status);
+    function saleStatus(uint256 saleId) public view returns(uint8) {
+        TokenSale storage sale = sales[saleId];
+        if(sale.cancelled) {
+            return uint8(SaleStatus.Canceled);
+        }
+        if(sale.quantity == 0) {
+            return uint8(SaleStatus.Complete);
+        }
+        if(sale.end != 0 && block.timestamp > sale.end) {
+            return uint8(SaleStatus.Timeout);
+        }
+        if(sale.start != 0 && block.timestamp < sale.start) {
+            return uint8(SaleStatus.Pending);
+        }
+        return uint8(SaleStatus.Active);
     }
 }

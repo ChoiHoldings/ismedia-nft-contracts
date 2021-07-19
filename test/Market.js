@@ -14,10 +14,19 @@ const SALE_ERC721 = 0;
 const SALE_ERC1155 = 1;
 
 // IsmediaMarketV1 SaleStatus enum
-const SALE_ACTIVE = 0;
-const SALE_COMPLETE = 1;
-const SALE_CANCELED = 2;
-const SALE_TIMEOUT = 3;
+const SALE_PENDING = '0';
+const SALE_ACTIVE = '1';
+const SALE_COMPLETE = '2';
+const SALE_CANCELED = '3';
+const SALE_TIMEOUT = '4';
+
+const STATUS_STR = {
+  [SALE_PENDING]: 'SALE_PENDING',
+  [SALE_ACTIVE]: 'SALE_ACTIVE',
+  [SALE_COMPLETE]: 'SALE_COMPLETE',
+  [SALE_CANCELED]: 'SALE_CANCELED',
+  [SALE_TIMEOUT]: 'SALE_TIMEOUT',
+};
 
 describe('isMedia Sale Contract', function() {
   let erc721;
@@ -39,8 +48,11 @@ describe('isMedia Sale Contract', function() {
   const price2 = ethers.utils.parseEther('5');
 
   const assertStatus = async (saleId, expectedStatus) => {
-    expect(await market.saleStatus(saleId))
-      .to.equal(expectedStatus);
+    const status = (await market.saleStatus(saleId)).toString();
+    assert.strictEqual(
+      status, expectedStatus,
+      `Expected ${STATUS_STR[expectedStatus]}, got ${STATUS_STR[status]}`,
+    );
   };
 
   before(async () => {
@@ -72,7 +84,7 @@ describe('isMedia Sale Contract', function() {
 
     // Cannot post before approval
     await shouldRevert(
-      market.connect(user1).postERC721(id1, price1),
+      market.connect(user1).postERC721(id1, price1, '0', '0'),
       "Not approved",
     );
 
@@ -80,7 +92,7 @@ describe('isMedia Sale Contract', function() {
     await erc721.connect(user1).approve(market.address, id1);
 
     // Post the sale
-    expect(await market.connect(user1).postERC721(id1, price1))
+    expect(await market.connect(user1).postERC721(id1, price1, '0', '0'))
       .to.emit(market, 'SaleCreated')
       .withArgs(user1.address, id1, sale1, erc721.address, SALE_ERC721);
 
@@ -117,7 +129,7 @@ describe('isMedia Sale Contract', function() {
 
     // Cannot post before approval
     await shouldRevert(
-      market.connect(user1).postERC1155(id1, price2, '5'),
+      market.connect(user1).postERC1155(id1, price2, '5', '0', '0'),
       "Not approved",
     );
 
@@ -125,7 +137,7 @@ describe('isMedia Sale Contract', function() {
     await erc1155.connect(user1).setApprovalForAll(market.address, true);
 
     // Post the sale
-    expect(await market.connect(user1).postERC1155(id1, price2, '5'))
+    expect(await market.connect(user1).postERC1155(id1, price2, '5', '0', '0'))
       .to.emit(market, 'SaleCreated')
       .withArgs(user1.address, id1, sale2, erc1155.address, SALE_ERC1155);
 
@@ -190,7 +202,7 @@ describe('isMedia Sale Contract', function() {
       'Paused',
     );
     await shouldRevert(
-      market.connect(user1).postERC721(id1, price1),
+      market.connect(user1).postERC721(id1, price1, '0', '0'),
       'Paused',
     );
 
@@ -208,7 +220,7 @@ describe('isMedia Sale Contract', function() {
     await erc721.connect(user2).approve(market.address, id1);
 
     // Post the sale
-    expect(await market.connect(user2).postERC721(id1, price1))
+    expect(await market.connect(user2).postERC721(id1, price1, '0', '0'))
       .to.emit(market, 'SaleCreated')
       .withArgs(user2.address, id1, sale3, erc721.address, SALE_ERC721);
 
