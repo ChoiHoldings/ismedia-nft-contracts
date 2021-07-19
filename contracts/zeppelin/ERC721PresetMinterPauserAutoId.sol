@@ -8,7 +8,6 @@ import "./ERC721Burnable.sol";
 import "./ERC721Pausable.sol";
 import "./AccessControlEnumerable.sol";
 import "./Context.sol";
-import "./Counters.sol";
 
 /**
  * @dev {ERC721} token, including:
@@ -32,12 +31,9 @@ contract ERC721PresetMinterPauserAutoId is
     ERC721Burnable,
     ERC721Pausable
 {
-    using Counters for Counters.Counter;
 
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
-
-    Counters.Counter private _tokenIdTracker;
 
     string private _baseTokenURI;
 
@@ -76,13 +72,12 @@ contract ERC721PresetMinterPauserAutoId is
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function mint(address to) public virtual {
+    function mint(address to, uint256 id) public virtual {
         require(hasRole(MINTER_ROLE, _msgSender()), "Minter role required");
 
         // We cannot just use balanceOf to create the new tokenId because tokens
         // can be burned (destroyed), so we need a separate counter.
-        _mint(to, _tokenIdTracker.current());
-        _tokenIdTracker.increment();
+        _mint(to, id);
     }
 
     /**

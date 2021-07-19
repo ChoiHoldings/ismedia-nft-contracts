@@ -82,7 +82,7 @@ describe('ERC721', function() {
 
   it('Can mint', async function() {
     // Owner mints to user 1
-    expect(await token.connect(owner).mint(user1.address))
+    expect(await token.connect(owner).mint(user1.address, id1))
       .to.emit(token, 'Transfer')
       .withArgs(ADDRESS_ZERO, user1.address, id1);
 
@@ -93,12 +93,12 @@ describe('ERC721', function() {
     assert.strictEqual(tokenOwner, user1.address, `Wrong owner of id=${id1}`);
 
     // Minter role, mint to self
-    expect(await token.connect(user1).mint(user1.address))
+    expect(await token.connect(user1).mint(user1.address, id2))
       .to.emit(token, 'Transfer')
       .withArgs(ADDRESS_ZERO, user1.address, id2);
 
     // Mint to user2
-    expect(await token.connect(user1).mint(user2.address))
+    expect(await token.connect(user1).mint(user2.address, id3))
       .to.emit(token, 'Transfer')
       .withArgs(ADDRESS_ZERO, user2.address, id3);
 
@@ -106,7 +106,7 @@ describe('ERC721', function() {
 
     // Non-minter can't mint
     await shouldRevert(
-      token.connect(user2).mint(user2.address),
+      token.connect(user2).mint(user2.address, id3),
       'Minter role required',
     );
   });

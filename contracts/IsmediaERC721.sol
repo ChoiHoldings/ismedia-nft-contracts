@@ -32,8 +32,8 @@ contract IsmediaERC721 is ERC721PresetMinterPauserAutoId {
      *
      * - the caller must have the `MINTER_ROLE`.
      */
-    function mint(address to) public override {
-        super.mint(to);
+    function mint(address to, uint256 id) public override {
+        super.mint(to, id);
     }
 
     /// @notice Pauses all token transfers.

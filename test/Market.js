@@ -79,7 +79,7 @@ describe('isMedia Sale Contract', function() {
 
   it('Posts and buys an ERC721 sale', async function() {
     // Mint an ERC721 token
-    expect(await erc721.connect(owner).mint(user1.address))
+    expect(await erc721.connect(owner).mint(user1.address, id1))
       .to.emit(erc721, 'Transfer')
       .withArgs(ADDRESS_ZERO, user1.address, id1);
 
