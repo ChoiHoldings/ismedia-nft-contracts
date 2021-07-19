@@ -123,7 +123,7 @@ describe('ERC1155', function() {
 
     await shouldRevert(
       token.connect(user1).safeTransferFrom(user1.address, user3.address, id2, 1, []),
-      'ERC1155Pausable: token transfer while paused',
+      'Paused',
     );
 
     await token.connect(owner).unpause();

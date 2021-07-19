@@ -15,11 +15,14 @@ async function main() {
 
   const erc721Factory = await ethers.getContractFactory('IsmediaERC721');
   const erc1155Factory = await ethers.getContractFactory('IsmediaERC1155');
+  const marketFactory = await ethers.getContractFactory('IsmediaMarketV1');
   const erc721 = await erc721Factory.deploy('isMedia ERC721', 'ISM721', erc721Uri);
   const erc1155 = await erc1155Factory.deploy(erc1155Uri);
+  const market = await marketFactory.deploy(erc721.address, erc1155.address);
 
   console.log('ERC721 address:', erc721.address);
   console.log('ERC1155 address:', erc1155.address);
+  console.log('Market address:', market.address);
 
   // Transfer some ETH if we're on the local network
   if(network.chainId === 1337) {

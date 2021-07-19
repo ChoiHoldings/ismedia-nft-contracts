@@ -5,7 +5,7 @@
   "author": "SamaTech",
   "scripts": {
     "compile": "npx hardhat compile",
-    "test": "npx hardhat test test/ERC1155.js",
+    "test": "npx hardhat test test/Market.js",
     "test:coverage": "npx hardhat coverage",
     "lint": "node_modules/.bin/eslint ./test *.js",
     "lint:solidity": "npx hardhat check",

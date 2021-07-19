@@ -4,8 +4,8 @@ pragma solidity ^0.8.0;
 
 import "./zeppelin/Pausable.sol";
 import "./zeppelin/Ownable.sol";
-import "./IsmediaERC721.sol";
-import "./IsmediaERC1155.sol";
+import "./zeppelin/IERC721.sol";
+import "./zeppelin/IERC1155.sol";
 
 contract IsmediaMarketV1 is Pausable, Ownable {
 
@@ -48,21 +48,23 @@ contract IsmediaMarketV1 is Pausable, Ownable {
     struct TokenSale {
         address seller;
         uint256 tokenId;
-        uint256 price;
+        uint256 unitPrice;
         uint256 quantity;
         uint256 end;
         TokenType tokenType;
         SaleStatus status;
     }
 
-    IsmediaERC721 public erc721;
-    IsmediaERC1155 public erc1155;
+    IERC721 public erc721;
+    IERC1155 public erc1155;
     mapping(uint256 => TokenSale) public sales;
     uint256 public saleCounter = 0;
 
     constructor(address erc721Address, address erc1155Address) {
-        erc721 = IsmediaERC721(erc721Address);
-        erc1155 = IsmediaERC1155(erc1155Address);
+        erc721 = IERC721(erc721Address);
+        erc1155 = IERC1155(erc1155Address);
+        require(erc721.supportsInterface(type(IERC721).interfaceId), "Invalid ERC721");
+        require(erc1155.supportsInterface(type(IERC1155).interfaceId), "Invalid ERC1155");
     }
 
     function pause() public onlyOwner {
@@ -82,20 +84,28 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         revert("Invalid token type");
     }
 
-    function buy(uint256 saleId) public payable whenNotPaused() {
+    function buy(uint256 saleId, uint256 quantity) public payable whenNotPaused() {
         TokenSale storage sale = sales[saleId];
-        require(msg.value >= sale.price, "Payment low");
+        uint256 totalPrice = sale.unitPrice * quantity;
+        require(msg.value >= totalPrice, "Payment low");
+        require(quantity <= sale.quantity, "Quantity high");
         require(sale.status == SaleStatus.Active, "Sale inactive");
 
-        sale.status = SaleStatus.Complete;
+        sale.quantity -= quantity;
+        if(sale.quantity == 0) {
+            sale.status = SaleStatus.Complete;
+        }
         address tokenAddress = tokenFromType(uint8(sale.tokenType));
 
         if(sale.tokenType == TokenType.ERC721) {
             erc721.safeTransferFrom(sale.seller, msg.sender, sale.tokenId);
         } else {
-            erc1155.safeTransferFrom(sale.seller, msg.sender, sale.tokenId, sale.quantity, "");
+            erc1155.safeTransferFrom(sale.seller, msg.sender, sale.tokenId, quantity, "");
         }
-        payable(sale.seller).transfer(msg.value);
+        payable(sale.seller).transfer(totalPrice);
+        if(msg.value > totalPrice) {
+            payable(msg.sender).transfer(msg.value - totalPrice);
+        }
         emit Purchase(
             msg.sender,
             sale.seller,
@@ -106,19 +116,21 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         );
     }
 
-    function _post(uint256 tokenId, uint256 price, uint256 quantity, TokenType tokenType) private {
-        uint256 saleId = saleCounter + 1;
+    function _post(uint256 tokenId, uint256 unitPrice, uint256 quantity, TokenType tokenType) private {
+        uint256 saleId = saleCounter;
         TokenSale storage sale = sales[saleId];
         address tokenAddress = tokenFromType(uint8(tokenType));
 
         if(tokenType == TokenType.ERC721) {
             require(msg.sender == erc721.ownerOf(tokenId), "Not token owner");
+            require(erc721.getApproved(tokenId) == address(this), "Not approved");
         } else {
             require(erc1155.balanceOf(msg.sender, tokenId) >= quantity, "Not enough tokens");
+            require(erc1155.isApprovedForAll(msg.sender, address(this)), "Not approved");
         }
         sale.seller = msg.sender;
         sale.tokenId = tokenId;
-        sale.price = price;
+        sale.unitPrice = unitPrice;
         sale.quantity = quantity;
         sale.tokenType = tokenType;
         sale.status = SaleStatus.Active;
@@ -134,12 +146,12 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         );
     }
 
-    function postERC1155(uint256 tokenId, uint256 price, uint256 quantity) public whenNotPaused() {
-        _post(tokenId, price, quantity, TokenType.ERC1155);
+    function postERC1155(uint256 tokenId, uint256 unitPrice, uint256 quantity) public whenNotPaused() {
+        _post(tokenId, unitPrice, quantity, TokenType.ERC1155);
     }
 
-    function postERC721(uint256 tokenId, uint256 price) public whenNotPaused() {
-        _post(tokenId, price, 1, TokenType.ERC721);
+    function postERC721(uint256 tokenId, uint256 unitPrice) public whenNotPaused() {
+        _post(tokenId, unitPrice, 1, TokenType.ERC721);
     }
 
     function cancel(uint256 saleId) public whenNotPaused() {

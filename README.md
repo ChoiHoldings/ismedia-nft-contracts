@@ -1,6 +1,6 @@
 # isMedia NFT Contracts
 
-ERC1155, ERC721, and management contracts for isMedia Ethereum NFTs
+ERC1155, ERC721, and marketplace V1 contracts for isMedia Ethereum NFTs
 
 ## Usage
 

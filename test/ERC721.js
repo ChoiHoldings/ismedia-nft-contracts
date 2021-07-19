@@ -162,7 +162,7 @@ describe('ERC721', function() {
     await token.connect(user3).approve(user1.address, id3);
     await shouldRevert(
       token.connect(user1).transferFrom(user3.address, user1.address, id3),
-      'ERC721Pausable: token transfer while paused',
+      'Paused',
     );
 
     await token.connect(owner).unpause();
