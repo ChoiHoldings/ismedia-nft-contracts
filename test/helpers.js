@@ -2,6 +2,9 @@ const assert = require('assert');
 
 const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 
+// 1 day in seconds
+const DAY_S = 60 * 60 * 24;
+
 const ERC721_INTERFACE = '0x80ac58cd';
 const AccessControlEnumerable_INTERFACE = '0x5a05180f';
 const ERC721Enumerable_INTERFACE = '0x780e9d63';
@@ -43,13 +46,27 @@ const shouldRevert = async (action, expectedOutput, message) => {
   }
 };
 
+async function blockTime() {
+  return (await ethers.provider.getBlock('latest')).timestamp;
+}
+
+async function increaseTime(seconds) {
+  const now = await blockTime();
+  await ethers.provider.send('evm_increaseTime', [seconds]);
+  await ethers.provider.send('evm_mine');
+  return now + seconds;
+}
+
 module.exports = {
   ADDRESS_ZERO,
+  DAY_S,
   ERC721_INTERFACE,
   AccessControlEnumerable_INTERFACE,
   ERC721Enumerable_INTERFACE,
   ERC1155MetadataURI_INTERFACE,
   ERC1155_INTERFACE,
+  blockTime,
+  increaseTime,
   assertInterface,
   assertRole,
   assertNoRole,

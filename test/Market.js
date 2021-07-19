@@ -2,8 +2,11 @@ const assert = require('assert');
 const { expect } = require('chai');
 
 const {
+  blockTime,
+  increaseTime,
   shouldRevert,
   ADDRESS_ZERO,
+  DAY_S,
 } = require('./helpers');
 
 const ERC721_URI = 'https://erc721.ismedia.com/data/';
@@ -40,6 +43,9 @@ describe('isMedia Sale Contract', function() {
   const sale1 = '0';
   const sale2 = '1';
   const sale3 = '2';
+  const sale4 = '3';
+  const sale5 = '4';
+  const sale6 = '5';
   // Token ids
   const id1 = '0';
   const id2 = '1';
@@ -249,15 +255,84 @@ describe('isMedia Sale Contract', function() {
 
   it('Checks sale expiration', async function() {
 
+    // End the sale in 2 days
+    const now = await blockTime();
+    const end = (now + (DAY_S * 2)).toString();
+    expect(await market.connect(user2).postERC721(id1, price1, '0', end))
+      .to.emit(market, 'SaleCreated')
+      .withArgs(user2.address, id1, sale4, erc721.address, SALE_ERC721);
+
+    assertStatus(sale4, SALE_ACTIVE);
+    await increaseTime(3 * DAY_S);
+    assertStatus(sale4, SALE_TIMEOUT);
+
+    // Can't buy a timed out sale
+    await shouldRevert(
+      market.connect(user1).buy(sale4, '1', { value: price1 }),
+      'Sale inactive',
+    );
   });
 
-  it('Checks error conditions', async function() {
+  it('Checks sale delayed post', async function() {
 
+    // Post the sale in 2 days
+    const now = await blockTime();
+    const start = (now + (DAY_S * 2)).toString();
+    expect(await market.connect(user2).postERC721(id1, price1, start, '0'))
+      .to.emit(market, 'SaleCreated')
+      .withArgs(user2.address, id1, sale5, erc721.address, SALE_ERC721);
+
+    // Can't buy a pending sale
+    await shouldRevert(
+      market.connect(user1).buy(sale5, '1', { value: price1 }),
+      'Sale inactive',
+    );
+
+    assertStatus(sale5, SALE_PENDING);
+    await increaseTime(3 * DAY_S);
+    assertStatus(sale5, SALE_ACTIVE);
+
+    // Can buy after the sale is active
+    expect(await market.connect(user3).buy(sale5, '1', { value: price1 }))
+      .to.emit(market, 'Purchase')
+      .withArgs(user3.address, user2.address, id1, sale5, erc721.address, SALE_ERC721);
   });
-  /*
-    tokenFromType
-    buy
-    cancel
-    saleStatus
-  */
+
+  it('Checks delay and expiration together', async function() {
+
+    // Post the sale in 2 days, end in 4 days
+    const now = await blockTime();
+    const start = (now + (DAY_S * 2)).toString();
+    const end = (now + (DAY_S * 4)).toString();
+
+    await erc1155.connect(user2).setApprovalForAll(market.address, true);
+    expect(await market.connect(user2).postERC1155(id1, price1, '5', start, end))
+      .to.emit(market, 'SaleCreated')
+      .withArgs(user2.address, id1, sale6, erc1155.address, SALE_ERC1155);
+
+    // Can't buy a pending sale
+    await shouldRevert(
+      market.connect(user1).buy(sale6, '1', { value: price1 }),
+      'Sale inactive',
+    );
+
+    assertStatus(sale6, SALE_PENDING);
+    await increaseTime(3 * DAY_S);
+    assertStatus(sale6, SALE_ACTIVE);
+
+    // Can buy
+    expect(await market.connect(user3).buy(sale6, '1', { value: price1 }))
+      .to.emit(market, 'Purchase')
+      .withArgs(user3.address, user2.address, id1, sale6, erc1155.address, SALE_ERC1155);
+
+    await increaseTime(3 * DAY_S);
+    assertStatus(sale6, SALE_TIMEOUT);
+
+    // Can't buy a timed out sale
+    await shouldRevert(
+      market.connect(user1).buy(sale6, '1', { value: price1 }),
+      'Sale inactive',
+    );
+  });
+
 });
