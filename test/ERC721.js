@@ -3,8 +3,8 @@ const { expect } = require('chai');
 
 const {
   ERC721_INTERFACE,
-  AccessControlEnumerable_INTERFACE,
-  ERC721Enumerable_INTERFACE,
+  AccessControlEnumerableInterface,
+  ERC721EnumerableInterface,
   assertInterface,
   assertRole,
   assertNoRole,
@@ -14,11 +14,12 @@ const {
 
 const URI = 'https://erc721.ismedia.com/data/';
 
-describe('ERC721', function() {
+describe('ERC721', () => {
   let token;
   let owner;
   let user1;
   let user2;
+  let user3;
   let pauserRole;
   let minterRole;
   // Token ids in order for testing
@@ -30,7 +31,7 @@ describe('ERC721', function() {
     [owner, user1, user2, user3] = await ethers.getSigners();
   });
 
-  it('Deploy ERC721', async function() {
+  it('Deploy ERC721', async () => {
     const name = 'isMedia 721';
     const symbol = 'ISM721';
 
@@ -45,11 +46,11 @@ describe('ERC721', function() {
 
     // Check interface support
     await assertInterface(token, ERC721_INTERFACE);
-    await assertInterface(token, AccessControlEnumerable_INTERFACE);
-    await assertInterface(token, ERC721Enumerable_INTERFACE);
+    await assertInterface(token, AccessControlEnumerableInterface);
+    await assertInterface(token, ERC721EnumerableInterface);
   });
 
-  it('Checks owner admin/pauser/minter role', async function() {
+  it('Checks owner admin/pauser/minter role', async () => {
     const adminRole = await token.DEFAULT_ADMIN_ROLE();
     minterRole = await token.MINTER_ROLE();
     pauserRole = await token.PAUSER_ROLE();
@@ -59,7 +60,7 @@ describe('ERC721', function() {
     await assertRole(token, adminRole, owner);
   });
 
-  it('Grants, revokes, and renounces roles', async function() {
+  it('Grants, revokes, and renounces roles', async () => {
     await assertNoRole(token, minterRole, user1);
     await token.connect(owner).grantRole(minterRole, user1.address);
 
@@ -80,7 +81,7 @@ describe('ERC721', function() {
     await token.connect(owner).grantRole(minterRole, user1.address);
   });
 
-  it('Can mint', async function() {
+  it('Can mint', async () => {
     // Owner mints to user 1
     expect(await token.connect(owner).mint(user1.address, id1))
       .to.emit(token, 'Transfer')
@@ -111,7 +112,7 @@ describe('ERC721', function() {
     );
   });
 
-  it('Can check ownership', async function() {
+  it('Can check ownership', async () => {
     expect(await token.tokenByIndex('0')).to.equal(id1);
     expect(await token.tokenByIndex('1')).to.equal(id2);
 
@@ -123,7 +124,7 @@ describe('ERC721', function() {
     expect(await token.balanceOf(user2.address)).to.equal(1);
   });
 
-  it('Can transfer', async function() {
+  it('Can transfer', async () => {
     expect(await token.getApproved(id1)).to.equal(ADDRESS_ZERO);
     expect(await token.getApproved(id2)).to.equal(ADDRESS_ZERO);
     expect(await token.getApproved(id3)).to.equal(ADDRESS_ZERO);
@@ -146,8 +147,8 @@ describe('ERC721', function() {
     expect(await token.totalSupply()).to.equal(3);
   });
 
-  it('Can pause/unpause', async function() {
-    expect(await token.paused()).false;
+  it('Can pause/unpause', async () => {
+    expect(await token.paused()).to.equal(false);
 
     // Non-pauser can't pause
     await shouldRevert(
@@ -157,7 +158,7 @@ describe('ERC721', function() {
 
     // Can approve but not transfer when paused
     await token.connect(owner).pause();
-    expect(await token.paused()).true;
+    expect(await token.paused()).to.equal(true);
 
     await token.connect(user3).approve(user1.address, id3);
     await shouldRevert(
@@ -166,10 +167,10 @@ describe('ERC721', function() {
     );
 
     await token.connect(owner).unpause();
-    expect(await token.paused()).false;
+    expect(await token.paused()).to.equal(false);
   });
 
-  it('Can burn', async function() {
+  it('Can burn', async () => {
     await token.connect(user3).burn(id2);
 
     expect(await token.balanceOf(user3.address)).to.equal(2);
@@ -182,7 +183,7 @@ describe('ERC721', function() {
     );
   });
 
-  it('Checks approval for all', async function() {
+  it('Checks approval for all', async () => {
     // TODO
     /*
       isApprovedForAll

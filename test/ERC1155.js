@@ -1,8 +1,8 @@
 const { expect } = require('chai');
 const {
   ERC1155_INTERFACE,
-  AccessControlEnumerable_INTERFACE,
-  ERC1155MetadataURI_INTERFACE,
+  AccessControlEnumerableInterface,
+  ERC1155MetadataURIInterface,
   assertRole,
   assertInterface,
   assertNoRole,
@@ -40,8 +40,8 @@ describe('ERC1155', function() {
 
     // Check interface support
     await assertInterface(token, ERC1155_INTERFACE);
-    await assertInterface(token, AccessControlEnumerable_INTERFACE);
-    await assertInterface(token, ERC1155MetadataURI_INTERFACE);
+    await assertInterface(token, AccessControlEnumerableInterface);
+    await assertInterface(token, ERC1155MetadataURIInterface);
   });
 
   it('Checks owner admin/pauser/minter role', async function() {

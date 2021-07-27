@@ -31,7 +31,7 @@ const STATUS_STR = {
   [SALE_TIMEOUT]: 'SALE_TIMEOUT',
 };
 
-describe('isMedia Sale Contract', function() {
+describe('isMedia Sale Contract', () => {
   let erc721;
   let erc1155;
   let market;
@@ -46,6 +46,7 @@ describe('isMedia Sale Contract', function() {
   const sale4 = '3';
   const sale5 = '4';
   const sale6 = '5';
+  const sale7 = '6';
   // Token ids
   const id1 = '0';
   const id2 = '1';
@@ -65,8 +66,7 @@ describe('isMedia Sale Contract', function() {
     [owner, user1, user2, user3] = await ethers.getSigners();
   });
 
-  it('Deploy Tokens and Market', async function() {
-
+  it('Deploy Tokens and Market', async () => {
     const ERC721Factory = await ethers.getContractFactory('IsmediaERC721');
     erc721 = await ERC721Factory.deploy('isMedia 721', 'ISM721', ERC721_URI);
 
@@ -77,7 +77,7 @@ describe('isMedia Sale Contract', function() {
     market = await MarketFactory.deploy(erc721.address, erc1155.address);
   });
 
-  it('Posts and buys an ERC721 sale', async function() {
+  it('Posts and buys an ERC721 sale', async () => {
     // Mint an ERC721 token
     expect(await erc721.connect(owner).mint(user1.address, id1))
       .to.emit(erc721, 'Transfer')
@@ -85,13 +85,13 @@ describe('isMedia Sale Contract', function() {
 
     const uri1 = await erc721.tokenURI(id1);
     assert.strictEqual(uri1, `${ERC721_URI}${id1}`, 'URI does not match');
-    id1Owner = await erc721.ownerOf(id1);
+    let id1Owner = await erc721.ownerOf(id1);
     assert.strictEqual(id1Owner, user1.address, 'Wrong owner after mint');
 
     // Cannot post before approval
     await shouldRevert(
       market.connect(user1).postERC721(id1, price1, '0', '0'),
-      "Not approved",
+      'Not approved',
     );
 
     // Approve market for transfer
@@ -116,8 +116,9 @@ describe('isMedia Sale Contract', function() {
     );
 
     expect(await market.connect(user2).buy(sale1, '1', { value: price1 }))
+      .to.changeEtherBalance(user2, price1.mul(-1))
       .to.emit(market, 'Purchase')
-      .withArgs(user2.address, user1.address, id1, sale1, erc721.address, SALE_ERC721);
+      .withArgs(user2.address, id1, sale1, user1.address, erc721.address, SALE_ERC721);
 
     id1Owner = await erc721.ownerOf(id1);
     assert.strictEqual(id1Owner, user2.address, 'Wrong owner after purchase');
@@ -125,7 +126,7 @@ describe('isMedia Sale Contract', function() {
     await assertStatus(sale1, SALE_COMPLETE);
   });
 
-  it('Posts and buys an ERC1155 sale', async function() {
+  it('Posts and buys an ERC1155 sale', async () => {
     // Mint an ERC721 token
     expect(await erc1155.connect(owner).mint(user1.address, id1, '10', []))
       .to.emit(erc1155, 'TransferSingle')
@@ -136,7 +137,7 @@ describe('isMedia Sale Contract', function() {
     // Cannot post before approval
     await shouldRevert(
       market.connect(user1).postERC1155(id1, price2, '5', '0', '0'),
-      "Not approved",
+      'Not approved',
     );
 
     // Approve market for transfer
@@ -163,7 +164,7 @@ describe('isMedia Sale Contract', function() {
     // Purchase 1
     expect(await market.connect(user2).buy(sale2, '1', { value: price2 }))
       .to.emit(market, 'Purchase')
-      .withArgs(user2.address, user1.address, id1, sale2, erc1155.address, SALE_ERC1155);
+      .withArgs(user2.address, id1, sale2, user1.address, erc1155.address, SALE_ERC1155);
 
     expect(await erc1155.balanceOf(user1.address, id1)).to.equal('9');
     expect(await erc1155.balanceOf(user2.address, id1)).to.equal('1');
@@ -174,7 +175,7 @@ describe('isMedia Sale Contract', function() {
     await market.connect(user2).buy(
       sale2,
       '4',
-      { value: ethers.utils.parseEther('100'), gasPrice: 0 }
+      { value: ethers.utils.parseEther('100'), gasPrice: 0 },
     );
 
     expect(await erc1155.balanceOf(user1.address, id1)).to.equal('5');
@@ -190,7 +191,7 @@ describe('isMedia Sale Contract', function() {
     );
   });
 
-  it('Pauses and unpauses', async function() {
+  it('Pauses and unpauses', async () => {
     // Only PAUSER can pause
     await shouldRevert(
       market.connect(user1).pause(),
@@ -200,7 +201,6 @@ describe('isMedia Sale Contract', function() {
     // Pause the market
     await market.connect(owner).pause();
     expect(await market.paused()).to.equal(true);
-
 
     // Cannot post or buy while paused
     await shouldRevert(
@@ -222,7 +222,7 @@ describe('isMedia Sale Contract', function() {
     expect(await market.paused()).to.equal(false);
   });
 
-  it('Cancels sale checks status', async function() {
+  it('Cancels sale checks status', async () => {
     await erc721.connect(user2).approve(market.address, id1);
 
     // Post the sale
@@ -253,8 +253,7 @@ describe('isMedia Sale Contract', function() {
     );
   });
 
-  it('Checks sale expiration', async function() {
-
+  it('Checks sale expiration', async () => {
     // End the sale in 2 days
     const now = await blockTime();
     const end = (now + (DAY_S * 2)).toString();
@@ -273,8 +272,7 @@ describe('isMedia Sale Contract', function() {
     );
   });
 
-  it('Checks sale delayed post', async function() {
-
+  it('Checks sale delayed post', async () => {
     // Post the sale in 2 days
     const now = await blockTime();
     const start = (now + (DAY_S * 2)).toString();
@@ -295,11 +293,10 @@ describe('isMedia Sale Contract', function() {
     // Can buy after the sale is active
     expect(await market.connect(user3).buy(sale5, '1', { value: price1 }))
       .to.emit(market, 'Purchase')
-      .withArgs(user3.address, user2.address, id1, sale5, erc721.address, SALE_ERC721);
+      .withArgs(user3.address, id1, sale5, user2.address, erc721.address, SALE_ERC721);
   });
 
-  it('Checks delay and expiration together', async function() {
-
+  it('Checks delay and expiration together', async () => {
     // Post the sale in 2 days, end in 4 days
     const now = await blockTime();
     const start = (now + (DAY_S * 2)).toString();
@@ -323,7 +320,7 @@ describe('isMedia Sale Contract', function() {
     // Can buy
     expect(await market.connect(user3).buy(sale6, '1', { value: price1 }))
       .to.emit(market, 'Purchase')
-      .withArgs(user3.address, user2.address, id1, sale6, erc1155.address, SALE_ERC1155);
+      .withArgs(user3.address, id1, sale6, user2.address, erc1155.address, SALE_ERC1155);
 
     await increaseTime(3 * DAY_S);
     assertStatus(sale6, SALE_TIMEOUT);
@@ -335,4 +332,34 @@ describe('isMedia Sale Contract', function() {
     );
   });
 
+  it('Tests ERC721 quantity hack', async () => {
+    // Mint an ERC721 token
+    expect(await erc721.connect(owner).mint(user1.address, id2))
+      .to.emit(erc721, 'Transfer')
+      .withArgs(ADDRESS_ZERO, user1.address, id2);
+
+    const uri1 = await erc721.tokenURI(id2);
+    assert.strictEqual(uri1, `${ERC721_URI}${id2}`, 'URI does not match');
+    const id2Owner = await erc721.ownerOf(id2);
+    assert.strictEqual(id2Owner, user1.address, 'Wrong owner after mint');
+
+    // Approve market for transfer
+    await erc721.connect(user1).approve(market.address, id2);
+
+    // Post the sale
+    expect(await market.connect(user1).postERC721(id2, price1, '0', '0'))
+      .to.emit(market, 'SaleCreated')
+      .withArgs(user1.address, id2, sale7, erc721.address, SALE_ERC721);
+
+    // ERC721 quantity must be 1
+    await shouldRevert(
+      market.connect(user1).buy(sale7, '0', { value: price1 }),
+      'Quantity low',
+    );
+    await shouldRevert(
+      market.connect(user2).buy(sale7, '2', { value: price1.mul('2') }),
+      'Quantity high',
+    );
+    await assertStatus(sale7, SALE_ACTIVE);
+  });
 });

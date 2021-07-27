@@ -6,22 +6,22 @@ const ADDRESS_ZERO = '0x0000000000000000000000000000000000000000';
 const DAY_S = 60 * 60 * 24;
 
 const ERC721_INTERFACE = '0x80ac58cd';
-const AccessControlEnumerable_INTERFACE = '0x5a05180f';
-const ERC721Enumerable_INTERFACE = '0x780e9d63';
-const ERC1155MetadataURI_INTERFACE = '0x0e89341c';
+const AccessControlEnumerableInterface = '0x5a05180f';
+const ERC721EnumerableInterface = '0x780e9d63';
+const ERC1155MetadataURIInterface = '0x0e89341c';
 const ERC1155_INTERFACE = '0xd9b67a26';
 
 const INTERFACE_NAMES = {
   [ERC721_INTERFACE]: 'ERC721',
-  [AccessControlEnumerable_INTERFACE]: 'AccessControlEnumberable',
-  [ERC721Enumerable_INTERFACE]: 'ERC721Enumerable',
-  [ERC1155MetadataURI_INTERFACE]: 'IERC1155MetadataURI',
+  [AccessControlEnumerableInterface]: 'AccessControlEnumberable',
+  [ERC721EnumerableInterface]: 'ERC721Enumerable',
+  [ERC1155MetadataURIInterface]: 'IERC1155MetadataURI',
   [ERC1155_INTERFACE]: 'ERC1155',
 };
 
-async function assertInterface(token, interface) {
-  const supported = await token.supportsInterface(interface);
-  assert.ok(supported, `Does not support ${INTERFACE_NAMES[interface]}`);
+async function assertInterface(token, intf) {
+  const supported = await token.supportsInterface(intf);
+  assert.ok(supported, `Does not support ${INTERFACE_NAMES[intf]}`);
 }
 
 async function assertRole(token, role, signer) {
@@ -61,9 +61,9 @@ module.exports = {
   ADDRESS_ZERO,
   DAY_S,
   ERC721_INTERFACE,
-  AccessControlEnumerable_INTERFACE,
-  ERC721Enumerable_INTERFACE,
-  ERC1155MetadataURI_INTERFACE,
+  AccessControlEnumerableInterface,
+  ERC721EnumerableInterface,
+  ERC1155MetadataURIInterface,
   ERC1155_INTERFACE,
   blockTime,
   increaseTime,

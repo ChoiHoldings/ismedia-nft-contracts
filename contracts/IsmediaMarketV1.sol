@@ -11,9 +11,9 @@ contract IsmediaMarketV1 is Pausable, Ownable {
 
     event Purchase(
         address indexed buyer,
-        address indexed seller,
         uint256 indexed tokenId,
-        uint256 saleId,
+        uint256 indexed saleId,
+        address seller,
         address tokenContract,
         uint8 tokenType
     );
@@ -21,7 +21,7 @@ contract IsmediaMarketV1 is Pausable, Ownable {
     event SaleCreated(
         address indexed seller,
         uint256 indexed tokenId,
-        uint256 saleId,
+        uint256 indexed saleId,
         address tokenContract,
         uint8 tokenType
     );
@@ -91,6 +91,7 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         uint256 totalPrice = sale.unitPrice * quantity;
         require(msg.value >= totalPrice, "Payment low");
         require(quantity <= sale.quantity, "Quantity high");
+        require(quantity > 0, "Quantity low");
         require(saleStatus(saleId) == uint8(SaleStatus.Active), "Sale inactive");
 
         sale.quantity -= quantity;
@@ -107,9 +108,9 @@ contract IsmediaMarketV1 is Pausable, Ownable {
         }
         emit Purchase(
             msg.sender,
-            sale.seller,
             sale.tokenId,
             saleId,
+            sale.seller,
             tokenAddress,
             uint8(sale.tokenType)
         );
