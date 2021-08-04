@@ -11,7 +11,7 @@ ERC1155, ERC721, and marketplace V1 contracts for isMedia Ethereum NFTs
 npm install
 ```
 
-**Compile contracts** (see [Environment] for )
+**Compile contracts** (see [Environment](#environment))
 ```bash
 npm run compile
 ```
@@ -33,7 +33,7 @@ npm run lint
 npm run lint:solidity
 ```
 
-**Hardhat local blockchain nodee**
+**Hardhat local blockchain node**
 ```bash
 npm run dev
 ```
