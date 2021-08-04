@@ -11,10 +11,10 @@ require('dotenv').config();
 const hardhatLogging = (process.env.HARDHAT_LOGGING !== '0');
 const walletMnemonic = process.env.WALLET_MNEMONIC;
 const testReportGas = (process.env.TEST_REPORT_GAS !== '0');
-const etherscanApiKey = process.env.ETHERSCAN_API_KEY;
+const etherscanApiKey = process.env.ETHERSCAN_API_KEY || '';
 
-const ropstenRpcUrl = process.env.ROPSTEN_RPC_URL;
-const ropstenMnemonic = process.env.ROPSTEN_MNEMONIC;
+const ropstenRpcUrl = process.env.ROPSTEN_RPC_URL || '';
+const ropstenMnemonic = process.env.ROPSTEN_MNEMONIC || '';
 
 module.exports = {
   defaultNetwork: 'hardhat',
