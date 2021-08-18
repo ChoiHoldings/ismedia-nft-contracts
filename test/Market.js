@@ -50,7 +50,6 @@ describe('isMedia Sale Contract', () => {
   // Token ids
   const id1 = '0';
   const id2 = '1';
-  const id3 = '2';
   const price1 = ethers.utils.parseEther('100');
   const price2 = ethers.utils.parseEther('5');
 

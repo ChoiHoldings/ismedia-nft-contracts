@@ -34,6 +34,7 @@ module.exports = {
     'max-len': ['error', { code: 150, ignorePattern: '^\\s*<path' }],
     'no-param-reassign': 0,
     'no-unused-vars': ['error', { varsIgnorePattern: 'ignore' }],
+    'no-unused-expressions': 'off',
     'no-console': 'off',
     'no-await-in-loop': 'off',
   },

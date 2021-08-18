@@ -12,10 +12,16 @@ const deployContracts = async ({ erc721Factory, erc1155Factory, marketFactory, e
   return { erc721, erc1155, market };
 };
 
-const getTokens = async ({ erc721Address, erc1155Address, erc721Factory, erc1155Factory }) => {
+const getContracts = async ({
+  erc721Address, erc1155Address, marketAddress, erc721Factory, erc1155Factory, marketFactory,
+}) => {
   const erc721 = await erc721Factory.attach(erc721Address);
   const erc1155 = await erc1155Factory.attach(erc1155Address);
-  return { erc721, erc1155 };
+  const contracts = { erc721, erc1155 };
+  if(marketAddress) {
+    contracts.market = await marketFactory.attach(marketAddress);
+  }
+  return contracts;
 };
 
 const printContractAddresses = ({ erc721, erc1155, market }) => {
@@ -71,9 +77,11 @@ async function main() {
     */
     const erc721Address = '0x27739F40512aAb094D295A4972731091aF99E52c';
     const erc1155Address = '0xf08e889457611C3025d9077b04E2f88c5FBeeA14';
-    const { erc721, erc1155 } = await getTokens({
+    const marketAddress = '0x82Cb4a65913ae392d2CA7E33968Da941C9611D98';
+    const { erc721, erc1155 } = await getContracts({
       erc721Address,
       erc1155Address,
+      marketAddress,
       ...factories,
     });
     const market = await factories.marketFactory.deploy(erc721.address, erc1155.address);
@@ -82,10 +90,14 @@ async function main() {
     const address1 = '0x67C0b32b8A8bf60AA23D77f76C11bA6409367491';
     const address2 = '0x0B31F66e8Df4B83a0f736935C0828b331FEA6EB2';
     const address3 = '0x5dBCC60bb53Aa3906D3154CFf69489555e780cc0';
+    const address4 = '0x8C1F1AE3d421A406447093c1d166E835386d23b5';
     const minterRole = await erc721.MINTER_ROLE();
+    /*
     await erc721.grantRole(minterRole, address1);
     await erc721.grantRole(minterRole, address2);
     await erc721.grantRole(minterRole, address3);
+    */
+    await erc721.grantRole(minterRole, address4);
     /*
     await erc1155.grantRole(minterRole, address2);
     await erc1155.grantRole(minterRole, address1);
