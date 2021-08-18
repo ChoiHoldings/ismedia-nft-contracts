@@ -12,7 +12,7 @@ const {
 
 const URI = 'https://erc1155.ismedia.com/{id}';
 
-describe('ERC1155', function() {
+describe('ERC1155', () => {
   let token;
   let owner;
   let user1;
@@ -31,7 +31,7 @@ describe('ERC1155', function() {
     [owner, user1, user2, user3] = await ethers.getSigners();
   });
 
-  it('Deploy ERC1155', async function() {
+  it('Deploy ERC1155', async () => {
     const ERC1155Factory = await ethers.getContractFactory('IsmediaERC1155');
 
     token = await ERC1155Factory.deploy(URI);
@@ -44,7 +44,7 @@ describe('ERC1155', function() {
     await assertInterface(token, ERC1155MetadataURIInterface);
   });
 
-  it('Checks owner admin/pauser/minter role', async function() {
+  it('Checks owner admin/pauser/minter role', async () => {
     const adminRole = await token.DEFAULT_ADMIN_ROLE();
     minterRole = await token.MINTER_ROLE();
     pauserRole = await token.PAUSER_ROLE();
@@ -54,7 +54,7 @@ describe('ERC1155', function() {
     await assertRole(token, adminRole, owner);
   });
 
-  it('Grants, revokes, and renounces roles', async function() {
+  it('Grants, revokes, and renounces roles', async () => {
     await assertNoRole(token, minterRole, user1);
     await token.connect(owner).grantRole(minterRole, user1.address);
 
@@ -75,8 +75,7 @@ describe('ERC1155', function() {
     await token.connect(owner).grantRole(minterRole, user1.address);
   });
 
-  it('Can mint NFTs', async function() {
-
+  it('Can mint NFTs', async () => {
     // Owner mints an NFT token to user1
     expect(await token.connect(owner).mint(user1.address, id1, id1Amount, []))
       .to.emit(token, 'TransferSingle')
@@ -108,8 +107,8 @@ describe('ERC1155', function() {
     );
   });
 
-  it('Can pause/unpause', async function() {
-    expect(await token.paused()).false;
+  it('Can pause/unpause', async () => {
+    expect(await token.paused()).to.be.false;
 
     // Non-pauser can't pause
     await shouldRevert(
@@ -119,7 +118,7 @@ describe('ERC1155', function() {
 
     // Can approve but not transfer when paused
     await token.connect(owner).pause();
-    expect(await token.paused()).true;
+    expect(await token.paused()).to.be.true;
 
     await shouldRevert(
       token.connect(user1).safeTransferFrom(user1.address, user3.address, id2, 1, []),
@@ -127,10 +126,10 @@ describe('ERC1155', function() {
     );
 
     await token.connect(owner).unpause();
-    expect(await token.paused()).false;
+    expect(await token.paused()).to.be.false;
   });
 
-  it('Can transfer', async function() {
+  it('Can transfer', async () => {
     // Can't transfer more than balance
     await shouldRevert(
       token.connect(user1).safeTransferFrom(user1.address, user3.address, id1, 2, []),
@@ -151,7 +150,7 @@ describe('ERC1155', function() {
     expect(await token.balanceOf(user3.address, id3)).to.equal(id3Amount);
   });
 
-  it('Can grant approval and transfer', async function() {
+  it('Can grant approval and transfer', async () => {
     expect(await token.isApprovedForAll(user3.address, user1.address)).false;
     await token.connect(user3).setApprovalForAll(user1.address, true);
     expect(await token.isApprovedForAll(user3.address, user1.address)).true;
@@ -163,18 +162,18 @@ describe('ERC1155', function() {
     expect(await token.isApprovedForAll(user3.address, user1.address)).false;
   });
 
-  it('Can mint batches', async function() {
+  it('Can mint batches', async () => {
     // TODO
     // balanceOfBatch
     // mintBatch
   });
 
-  it('Can transfer batches', async function() {
+  it('Can transfer batches', async () => {
     // TODO
     // safeBatchTransferFrom
   });
 
-  it('Can burn', async function() {
+  it('Can burn', async () => {
     await token.connect(user3).burn(user3.address, id2, '10');
 
     expect(await token.balanceOf(user3.address, id2)).to.equal(0);
@@ -194,5 +193,4 @@ describe('ERC1155', function() {
 
     // TODO burnBatch
   });
-
 });
